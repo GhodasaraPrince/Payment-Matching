@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { PaymentMatchingService } from './payment-matching.service';
 import { RunMatchResponse } from './models';
 
@@ -17,6 +17,9 @@ export class PaymentsMatching {
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly result = signal<RunMatchResponse | null>(null);
+
+  protected readonly summary = computed(() => this.result()?.summary ?? null);
+  protected readonly items = computed(() => this.result()?.items ?? []);
 
   onSystemFileSelected(event: Event): void {
     this.systemFile.set(this.extractFile(event));
@@ -50,6 +53,10 @@ export class PaymentsMatching {
         this.loading.set(false);
       },
     });
+  }
+
+  protected formatAmount(amount: number | null): string {
+    return amount === null ? '-' : amount.toFixed(2);
   }
 
   private extractFile(event: Event): File | null {
