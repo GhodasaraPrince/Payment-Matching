@@ -26,6 +26,15 @@
       {{ s.onlyProvider }} | Amount Mismatch: {{ s.amountMismatch }}
     </p>
 
+    <label class="filter-row">
+      Show:
+      <select [value]="filter()" (change)="onFilterChange($event)">
+        <option value="unresolved">Unresolved</option>
+        <option value="resolved">Resolved</option>
+        <option value="all">All</option>
+      </select>
+    </label>
+
     <table class="results-table">
       <thead>
         <tr>
@@ -40,7 +49,7 @@
         </tr>
       </thead>
       <tbody>
-        @for (item of items(); track item.id) {
+        @for (item of filteredItems(); track item.id) {
           <tr>
             <td>{{ item.orderId }}</td>
             <td>{{ formatAmount(item.systemAmount) }}</td>
@@ -49,7 +58,14 @@
             <td>{{ item.status }}</td>
             <td>{{ item.resolved ? 'Yes' : 'No' }}</td>
             <td>{{ item.resolutionSide ?? '-' }}</td>
-            <td></td>
+            <td class="actions">
+              @if (!item.resolved) {
+                <button type="button" (click)="resolve(item, 'System')">Accept System</button>
+                <button type="button" (click)="resolve(item, 'Provider')">Accept Provider</button>
+              } @else {
+                <span class="resolved-badge">{{ item.resolutionSide }} accepted</span>
+              }
+            </td>
           </tr>
         } @empty {
           <tr>
