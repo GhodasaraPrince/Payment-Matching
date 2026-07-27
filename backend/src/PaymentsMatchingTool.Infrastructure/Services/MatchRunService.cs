@@ -59,6 +59,9 @@ public class MatchRunService : IMatchRunService
     public Task<MatchBatch?> GetBatchAsync(Guid batchId, CancellationToken cancellationToken = default) =>
         _db.MatchBatches.FirstOrDefaultAsync(b => b.Id == batchId, cancellationToken);
 
+    public Task<List<MatchBatch>> GetAllBatchesAsync(CancellationToken cancellationToken = default) =>
+        _db.MatchBatches.OrderByDescending(b => b.CreatedAtUtc).ToListAsync(cancellationToken);
+
     public async Task<List<PaymentMatch>> GetItemsAsync(
         Guid batchId,
         MatchFilter filter,

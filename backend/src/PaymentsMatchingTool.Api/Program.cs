@@ -49,7 +49,6 @@ app.UseSwaggerUI(options =>
 });
 
 app.UseCors(CorsPolicyName);
-app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
 

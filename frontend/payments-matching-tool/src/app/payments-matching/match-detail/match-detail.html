@@ -1,0 +1,25 @@
+<p-card class="detail-header">
+  <a routerLink="/history" class="back-link"><i class="pi pi-arrow-left"></i> Back to history</a>
+
+  @if (detail(); as d) {
+    <div class="meta-row">
+      <div><span class="meta-label">Run Date</span><span>{{ d.createdAtUtc | date: 'medium' }}</span></div>
+      <div><span class="meta-label">System File</span><span>{{ d.systemFileName }}</span></div>
+      <div><span class="meta-label">Provider File</span><span>{{ d.providerFileName }}</span></div>
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <p-message severity="error" [text]="errorMessage()!" />
+  }
+</p-card>
+
+@if (summary(); as s) {
+  <app-match-results-panel
+    [summary]="s"
+    [items]="items()"
+    [filter]="filter()"
+    (filterChange)="onFilterChange($event)"
+    (resolveItem)="onResolveItem($event)"
+  />
+}

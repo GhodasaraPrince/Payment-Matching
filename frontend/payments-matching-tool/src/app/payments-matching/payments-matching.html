@@ -1,78 +1,71 @@
-<section class="upload-section">
-  <div class="file-inputs">
-    <label>
-      System CSV
-      <input type="file" accept=".csv" (change)="onSystemFileSelected($event)" />
-    </label>
-    <label>
-      Provider CSV
-      <input type="file" accept=".csv" (change)="onProviderFileSelected($event)" />
-    </label>
+<p-card class="upload-card">
+  <div class="upload-section">
+    <div class="file-inputs">
+      <div class="file-field">
+        <span class="file-label">System CSV</span>
+        <p-fileupload
+          #systemUpload
+          mode="basic"
+          accept=".csv"
+          chooseLabel="Choose file"
+          chooseIcon="pi pi-file"
+          [auto]="false"
+          [multiple]="false"
+          (onSelect)="onSystemFileSelected($event)"
+        />
+        @if (systemFile()) {
+          <span class="file-name"><i class="pi pi-check-circle"></i> {{ systemFile()!.name }}</span>
+        }
+      </div>
+
+      <div class="file-field">
+        <span class="file-label">Provider CSV</span>
+        <p-fileupload
+          #providerUpload
+          mode="basic"
+          accept=".csv"
+          chooseLabel="Choose file"
+          chooseIcon="pi pi-file"
+          [auto]="false"
+          [multiple]="false"
+          (onSelect)="onProviderFileSelected($event)"
+        />
+        @if (providerFile()) {
+          <span class="file-name"><i class="pi pi-check-circle"></i> {{ providerFile()!.name }}</span>
+        }
+      </div>
+    </div>
+
+    <div class="action-row">
+      <p-button
+        label="Run Match"
+        icon="pi pi-play"
+        [loading]="loading()"
+        [disabled]="!canRun()"
+        (onClick)="runMatch()"
+      />
+      <p-button
+        label="Reset"
+        icon="pi pi-refresh"
+        severity="secondary"
+        [outlined]="true"
+        [disabled]="loading()"
+        (onClick)="reset(); systemUpload.clear(); providerUpload.clear()"
+      />
+    </div>
+
+    @if (errorMessage()) {
+      <p-message severity="error" [text]="errorMessage()!" />
+    }
   </div>
-
-  <button type="button" (click)="runMatch()" [disabled]="loading()">
-    {{ loading() ? 'Running…' : 'Run Match' }}
-  </button>
-
-  @if (errorMessage()) {
-    <p class="error-banner">{{ errorMessage() }}</p>
-  }
-</section>
+</p-card>
 
 @if (summary(); as s) {
-  <section class="results-section">
-    <p class="summary-line">
-      Total: {{ s.total }} | Matched: {{ s.matched }} | Only System: {{ s.onlySystem }} | Only Provider:
-      {{ s.onlyProvider }} | Amount Mismatch: {{ s.amountMismatch }}
-    </p>
-
-    <label class="filter-row">
-      Show:
-      <select [value]="filter()" (change)="onFilterChange($event)">
-        <option value="unresolved">Unresolved</option>
-        <option value="resolved">Resolved</option>
-        <option value="all">All</option>
-      </select>
-    </label>
-
-    <table class="results-table">
-      <thead>
-        <tr>
-          <th>Order ID</th>
-          <th>System Amount</th>
-          <th>Provider Amount</th>
-          <th>Currency</th>
-          <th>Status</th>
-          <th>Resolved</th>
-          <th>Resolution Side</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (item of filteredItems(); track item.id) {
-          <tr>
-            <td>{{ item.orderId }}</td>
-            <td>{{ formatAmount(item.systemAmount) }}</td>
-            <td>{{ formatAmount(item.providerAmount) }}</td>
-            <td>{{ item.currency }}</td>
-            <td>{{ item.status }}</td>
-            <td>{{ item.resolved ? 'Yes' : 'No' }}</td>
-            <td>{{ item.resolutionSide ?? '-' }}</td>
-            <td class="actions">
-              @if (!item.resolved) {
-                <button type="button" (click)="resolve(item, 'System')">Accept System</button>
-                <button type="button" (click)="resolve(item, 'Provider')">Accept Provider</button>
-              } @else {
-                <span class="resolved-badge">{{ item.resolutionSide }} accepted</span>
-              }
-            </td>
-          </tr>
-        } @empty {
-          <tr>
-            <td colspan="8">No items to show.</td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </section>
+  <app-match-results-panel
+    [summary]="s"
+    [items]="items()"
+    [filter]="filter()"
+    (filterChange)="onFilterChange($event)"
+    (resolveItem)="onResolveItem($event)"
+  />
 }

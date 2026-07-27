@@ -27,3 +27,20 @@ export interface RunMatchResponse {
   summary: MatchSummary;
   items: PaymentMatchRow[];
 }
+
+export interface MatchBatchSummary {
+  id: string;
+  createdAtUtc: string;
+  systemFileName: string;
+  providerFileName: string;
+  summary: MatchSummary;
+}
+
+export interface MatchBatchDetail {
+  batchId: string;
+  createdAtUtc: string;
+  systemFileName: string;
+  providerFileName: string;
+  summary: MatchSummary;
+  items: PaymentMatchRow[];
+}
