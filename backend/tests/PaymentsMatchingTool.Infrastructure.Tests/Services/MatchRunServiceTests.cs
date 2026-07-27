@@ -35,9 +35,10 @@ public class MatchRunServiceTests
         await using var db = CreateDb();
         var service = CreateService(db);
 
-        var result = await service.GetAllBatchesAsync();
+        var (result, totalCount) = await service.GetAllBatchesAsync();
 
         Assert.Empty(result);
+        Assert.Equal(0, totalCount);
     }
 
     [Fact]
@@ -51,8 +52,26 @@ public class MatchRunServiceTests
         await db.SaveChangesAsync();
 
         var service = CreateService(db);
-        var result = await service.GetAllBatchesAsync();
+        var (result, totalCount) = await service.GetAllBatchesAsync();
 
         Assert.Equal(new[] { newest.Id, middle.Id, oldest.Id }, result.Select(b => b.Id));
+        Assert.Equal(3, totalCount);
+    }
+
+    [Fact]
+    public async Task GetAllBatchesAsync_PageSizeSmallerThanTotal_ReturnsOnlyThatPage()
+    {
+        await using var db = CreateDb();
+        var oldest = NewBatch(new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+        var middle = NewBatch(new DateTime(2026, 1, 2, 0, 0, 0, DateTimeKind.Utc));
+        var newest = NewBatch(new DateTime(2026, 1, 3, 0, 0, 0, DateTimeKind.Utc));
+        db.MatchBatches.AddRange(oldest, middle, newest);
+        await db.SaveChangesAsync();
+
+        var service = CreateService(db);
+        var (result, totalCount) = await service.GetAllBatchesAsync(page: 1, pageSize: 2);
+
+        Assert.Equal(new[] { newest.Id, middle.Id }, result.Select(b => b.Id));
+        Assert.Equal(3, totalCount);
     }
 }

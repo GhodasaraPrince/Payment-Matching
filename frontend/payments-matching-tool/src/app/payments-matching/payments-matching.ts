@@ -8,6 +8,8 @@ import { MatchResultsPanel } from './match-results-panel/match-results-panel';
 import { PaymentMatchingService } from './payment-matching.service';
 import { PaymentMatchRow, ResolutionSide, ResultFilter, RunMatchResponse } from './models';
 
+const MAX_FILE_SIZE_BYTES = 9_000_000;
+
 @Component({
   selector: 'app-payments-matching',
   imports: [ButtonModule, CardModule, FileUploadModule, MatchResultsPanel, MessageModule],
@@ -23,6 +25,7 @@ export class PaymentsMatching {
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly result = signal<RunMatchResponse | null>(null);
   protected readonly filter = signal<ResultFilter>('all');
+  protected readonly resolvingIds = signal<ReadonlySet<string>>(new Set());
 
   protected readonly summary = computed(() => this.result()?.summary ?? null);
   protected readonly items = computed(() => this.result()?.items ?? []);
@@ -30,11 +33,15 @@ export class PaymentsMatching {
   protected readonly canRun = computed(() => !!this.systemFile() && !!this.providerFile() && !this.loading());
 
   onSystemFileSelected(event: FileSelectEvent): void {
-    this.systemFile.set(event.files[0] ?? null);
+    this.systemFile.set(this.validateFile(event.files[0]));
   }
 
   onProviderFileSelected(event: FileSelectEvent): void {
-    this.providerFile.set(event.files[0] ?? null);
+    this.providerFile.set(this.validateFile(event.files[0]));
+  }
+
+  onFileUploadError(): void {
+    this.errorMessage.set('That file could not be selected — check it is a CSV under 9 MB.');
   }
 
   onFilterChange(filter: ResultFilter): void {
@@ -77,12 +84,51 @@ export class PaymentsMatching {
   }
 
   onResolveItem(event: { item: PaymentMatchRow; side: ResolutionSide }): void {
-    this.paymentMatchingService.resolve(event.item.id, event.side).subscribe({
-      next: (updated) => this.applyResolvedItem(updated),
+    const itemId = event.item.id;
+    if (this.resolvingIds().has(itemId)) {
+      return;
+    }
+
+    this.setResolving(itemId, true);
+    this.paymentMatchingService.resolve(itemId, event.side).subscribe({
+      next: (updated) => {
+        this.applyResolvedItem(updated);
+        this.setResolving(itemId, false);
+      },
       error: (err: HttpErrorResponse) => {
         this.errorMessage.set(err.error?.message ?? 'Could not save the resolution. Please try again.');
+        this.setResolving(itemId, false);
       },
     });
+  }
+
+  private setResolving(itemId: string, resolving: boolean): void {
+    const next = new Set(this.resolvingIds());
+    if (resolving) {
+      next.add(itemId);
+    } else {
+      next.delete(itemId);
+    }
+    this.resolvingIds.set(next);
+  }
+
+  private validateFile(file: File | undefined): File | null {
+    if (!file) {
+      return null;
+    }
+
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+      this.errorMessage.set(`"${file.name}" is not a CSV file.`);
+      return null;
+    }
+
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      this.errorMessage.set(`"${file.name}" exceeds the 9 MB file size limit.`);
+      return null;
+    }
+
+    this.errorMessage.set(null);
+    return file;
   }
 
   private applyResolvedItem(updated: PaymentMatchRow): void {

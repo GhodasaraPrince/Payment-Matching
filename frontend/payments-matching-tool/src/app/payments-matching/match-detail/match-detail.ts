@@ -24,9 +24,14 @@ export class MatchDetail {
   protected readonly loading = signal(true);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly filter = signal<ResultFilter>('all');
+  protected readonly resolvingIds = signal<ReadonlySet<string>>(new Set());
 
   protected readonly summary = computed(() => this.detail()?.summary ?? null);
   protected readonly items = computed(() => this.detail()?.items ?? []);
+  protected readonly truncated = computed(() => {
+    const d = this.detail();
+    return !!d && d.totalItems > d.items.length;
+  });
 
   constructor() {
     effect(() => {
@@ -52,12 +57,32 @@ export class MatchDetail {
   }
 
   onResolveItem(event: { item: PaymentMatchRow; side: ResolutionSide }): void {
-    this.paymentMatchingService.resolve(event.item.id, event.side).subscribe({
-      next: (updated) => this.applyResolvedItem(updated),
+    const itemId = event.item.id;
+    if (this.resolvingIds().has(itemId)) {
+      return;
+    }
+
+    this.setResolving(itemId, true);
+    this.paymentMatchingService.resolve(itemId, event.side).subscribe({
+      next: (updated) => {
+        this.applyResolvedItem(updated);
+        this.setResolving(itemId, false);
+      },
       error: (err: HttpErrorResponse) => {
         this.errorMessage.set(err.error?.message ?? 'Could not save the resolution. Please try again.');
+        this.setResolving(itemId, false);
       },
     });
+  }
+
+  private setResolving(itemId: string, resolving: boolean): void {
+    const next = new Set(this.resolvingIds());
+    if (resolving) {
+      next.add(itemId);
+    } else {
+      next.delete(itemId);
+    }
+    this.resolvingIds.set(next);
   }
 
   private applyResolvedItem(updated: PaymentMatchRow): void {

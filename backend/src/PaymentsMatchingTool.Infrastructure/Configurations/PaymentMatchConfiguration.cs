@@ -19,5 +19,6 @@ public class PaymentMatchConfiguration : IEntityTypeConfiguration<PaymentMatch>
         builder.Property(i => i.ResolutionSide).HasConversion<string>().HasMaxLength(20);
 
         builder.HasIndex(i => new { i.BatchId, i.OrderId, i.Currency }).IsUnique();
+        builder.HasIndex(i => new { i.BatchId, i.Resolved });
     }
 }

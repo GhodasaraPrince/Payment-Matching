@@ -12,6 +12,12 @@
   @if (errorMessage()) {
     <p-message severity="error" [text]="errorMessage()!" />
   }
+
+  @if (truncated(); as t) {
+    @if (detail(); as d) {
+      <p-message severity="warn" [text]="'Showing ' + d.items.length + ' of ' + d.totalItems + ' items.'" />
+    }
+  }
 </p-card>
 
 @if (summary(); as s) {
@@ -19,6 +25,7 @@
     [summary]="s"
     [items]="items()"
     [filter]="filter()"
+    [resolvingIds]="resolvingIds()"
     (filterChange)="onFilterChange($event)"
     (resolveItem)="onResolveItem($event)"
   />

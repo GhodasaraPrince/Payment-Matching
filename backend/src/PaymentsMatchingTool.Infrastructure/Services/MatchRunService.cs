@@ -59,12 +59,27 @@ public class MatchRunService : IMatchRunService
     public Task<MatchBatch?> GetBatchAsync(Guid batchId, CancellationToken cancellationToken = default) =>
         _db.MatchBatches.FirstOrDefaultAsync(b => b.Id == batchId, cancellationToken);
 
-    public Task<List<MatchBatch>> GetAllBatchesAsync(CancellationToken cancellationToken = default) =>
-        _db.MatchBatches.OrderByDescending(b => b.CreatedAtUtc).ToListAsync(cancellationToken);
+    public async Task<(List<MatchBatch> Batches, int TotalCount)> GetAllBatchesAsync(
+        int page = 1,
+        int pageSize = 20,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _db.MatchBatches.OrderByDescending(b => b.CreatedAtUtc);
 
-    public async Task<List<PaymentMatch>> GetItemsAsync(
+        var totalCount = await query.CountAsync(cancellationToken);
+        var batches = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        return (batches, totalCount);
+    }
+
+    public async Task<(List<PaymentMatch> Items, int TotalCount)> GetItemsAsync(
         Guid batchId,
         MatchFilter filter,
+        int page = 1,
+        int pageSize = 100,
         CancellationToken cancellationToken = default)
     {
         var query = _db.PaymentMatches.Where(i => i.BatchId == batchId);
@@ -76,10 +91,15 @@ public class MatchRunService : IMatchRunService
             _ => query,
         };
 
-        return await query
+        var totalCount = await query.CountAsync(cancellationToken);
+        var items = await query
             .OrderBy(i => i.OrderId)
             .ThenBy(i => i.Currency)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync(cancellationToken);
+
+        return (items, totalCount);
     }
 
     public async Task<PaymentMatch?> ResolveAsync(
