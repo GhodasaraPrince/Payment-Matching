@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { PaymentMatchingService } from './payment-matching.service';
-import { RunMatchResponse } from './models';
+import { PaymentMatchRow, ResolutionSide, ResultFilter, RunMatchResponse } from './models';
 
 @Component({
   selector: 'app-payments-matching',
@@ -17,9 +17,18 @@ export class PaymentsMatching {
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly result = signal<RunMatchResponse | null>(null);
+  protected readonly filter = signal<ResultFilter>('unresolved');
 
   protected readonly summary = computed(() => this.result()?.summary ?? null);
   protected readonly items = computed(() => this.result()?.items ?? []);
+  protected readonly filteredItems = computed(() => {
+    const filter = this.filter();
+    return this.items().filter((item) => {
+      if (filter === 'resolved') return item.resolved;
+      if (filter === 'unresolved') return !item.resolved;
+      return true;
+    });
+  });
 
   onSystemFileSelected(event: Event): void {
     this.systemFile.set(this.extractFile(event));
@@ -27,6 +36,10 @@ export class PaymentsMatching {
 
   onProviderFileSelected(event: Event): void {
     this.providerFile.set(this.extractFile(event));
+  }
+
+  onFilterChange(event: Event): void {
+    this.filter.set((event.target as HTMLSelectElement).value as ResultFilter);
   }
 
   runMatch(): void {
@@ -44,6 +57,7 @@ export class PaymentsMatching {
     this.paymentMatchingService.runMatch(systemFile, providerFile).subscribe({
       next: (response) => {
         this.result.set(response);
+        this.filter.set('unresolved');
         this.loading.set(false);
       },
       error: (err: HttpErrorResponse) => {
@@ -55,8 +69,29 @@ export class PaymentsMatching {
     });
   }
 
+  resolve(item: PaymentMatchRow, resolutionSide: ResolutionSide): void {
+    this.paymentMatchingService.resolve(item.id, resolutionSide).subscribe({
+      next: (updated) => this.applyResolvedItem(updated),
+      error: (err: HttpErrorResponse) => {
+        this.errorMessage.set(err.error?.message ?? 'Could not save the resolution. Please try again.');
+      },
+    });
+  }
+
   protected formatAmount(amount: number | null): string {
     return amount === null ? '-' : amount.toFixed(2);
+  }
+
+  private applyResolvedItem(updated: PaymentMatchRow): void {
+    const current = this.result();
+    if (!current) {
+      return;
+    }
+
+    this.result.set({
+      ...current,
+      items: current.items.map((item) => (item.id === updated.id ? updated : item)),
+    });
   }
 
   private extractFile(event: Event): File | null {
