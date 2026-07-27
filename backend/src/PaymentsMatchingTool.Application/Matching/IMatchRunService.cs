@@ -14,6 +14,9 @@ public interface IMatchRunService
 
     Task<MatchBatch?> GetBatchAsync(Guid batchId, CancellationToken cancellationToken = default);
 
+    /// <summary>Returns every batch, most recently created first.</summary>
+    Task<List<MatchBatch>> GetAllBatchesAsync(CancellationToken cancellationToken = default);
+
     Task<List<PaymentMatch>> GetItemsAsync(
         Guid batchId,
         MatchFilter filter,

@@ -6,6 +6,8 @@
     <Project Path="src/PaymentsMatchingTool.Infrastructure/PaymentsMatchingTool.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/PaymentsMatchingTool.Api.Tests/PaymentsMatchingTool.Api.Tests.csproj" />
     <Project Path="tests/PaymentsMatchingTool.Application.Tests/PaymentsMatchingTool.Application.Tests.csproj" />
+    <Project Path="tests/PaymentsMatchingTool.Infrastructure.Tests/PaymentsMatchingTool.Infrastructure.Tests.csproj" />
   </Folder>
 </Solution>

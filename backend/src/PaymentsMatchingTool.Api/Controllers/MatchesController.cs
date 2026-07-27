@@ -53,8 +53,15 @@ public class MatchesController : ControllerBase
         }
     }
 
+    [HttpGet]
+    public async Task<ActionResult<List<MatchBatchSummaryDto>>> GetAllBatches(CancellationToken cancellationToken)
+    {
+        var batches = await _matchRunService.GetAllBatchesAsync(cancellationToken);
+        return Ok(batches.Select(MatchBatchSummaryDto.From).ToList());
+    }
+
     [HttpGet("{batchId:guid}")]
-    public async Task<ActionResult<List<PaymentMatchDto>>> GetItems(
+    public async Task<ActionResult<MatchBatchDetailResponse>> GetItems(
         Guid batchId,
         [FromQuery] string filter = "all",
         CancellationToken cancellationToken = default)
@@ -71,7 +78,7 @@ public class MatchesController : ControllerBase
         }
 
         var items = await _matchRunService.GetItemsAsync(batchId, parsedFilter, cancellationToken);
-        return Ok(items.Select(PaymentMatchDto.From).ToList());
+        return Ok(MatchBatchDetailResponse.From(batch, items));
     }
 
     [HttpPatch("items/{id:guid}/resolve")]

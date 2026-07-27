@@ -1,0 +1,28 @@
+.detail-header {
+  margin-bottom: 1.5rem;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+  color: var(--p-primary-color);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+
+  .meta-label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--p-text-muted-color);
+  }
+}

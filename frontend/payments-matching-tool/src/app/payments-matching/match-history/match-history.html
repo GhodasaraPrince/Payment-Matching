@@ -1,0 +1,37 @@
+<p-card class="history-card">
+  @if (errorMessage()) {
+    <p-message severity="error" [text]="errorMessage()!" />
+  }
+
+  <p-table [value]="batches()" [loading]="loading()" dataKey="id" [rowHover]="true" responsiveLayout="scroll">
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Run Date</th>
+        <th>System File</th>
+        <th>Provider File</th>
+        <th>Total</th>
+        <th>Matched</th>
+        <th>Only System</th>
+        <th>Only Provider</th>
+        <th>Amount Mismatch</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-batch>
+      <tr class="history-row" (click)="openBatch(batch)">
+        <td>{{ batch.createdAtUtc | date: 'medium' }}</td>
+        <td>{{ batch.systemFileName }}</td>
+        <td>{{ batch.providerFileName }}</td>
+        <td>{{ batch.summary.total }}</td>
+        <td>{{ batch.summary.matched }}</td>
+        <td>{{ batch.summary.onlySystem }}</td>
+        <td>{{ batch.summary.onlyProvider }}</td>
+        <td>{{ batch.summary.amountMismatch }}</td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="8" class="empty-row">No past comparisons yet.</td>
+      </tr>
+    </ng-template>
+  </p-table>
+</p-card>

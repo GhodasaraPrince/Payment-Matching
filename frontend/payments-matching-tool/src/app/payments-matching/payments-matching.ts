@@ -1,11 +1,16 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
+import { ButtonModule } from 'primeng/button';
+import { CardModule } from 'primeng/card';
+import { FileSelectEvent, FileUploadModule } from 'primeng/fileupload';
+import { MessageModule } from 'primeng/message';
+import { MatchResultsPanel } from './match-results-panel/match-results-panel';
 import { PaymentMatchingService } from './payment-matching.service';
 import { PaymentMatchRow, ResolutionSide, ResultFilter, RunMatchResponse } from './models';
 
 @Component({
   selector: 'app-payments-matching',
-  imports: [],
+  imports: [ButtonModule, CardModule, FileUploadModule, MatchResultsPanel, MessageModule],
   templateUrl: './payments-matching.html',
   styleUrl: './payments-matching.scss',
 })
@@ -17,29 +22,31 @@ export class PaymentsMatching {
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly result = signal<RunMatchResponse | null>(null);
-  protected readonly filter = signal<ResultFilter>('unresolved');
+  protected readonly filter = signal<ResultFilter>('all');
 
   protected readonly summary = computed(() => this.result()?.summary ?? null);
   protected readonly items = computed(() => this.result()?.items ?? []);
-  protected readonly filteredItems = computed(() => {
-    const filter = this.filter();
-    return this.items().filter((item) => {
-      if (filter === 'resolved') return item.resolved;
-      if (filter === 'unresolved') return !item.resolved;
-      return true;
-    });
-  });
 
-  onSystemFileSelected(event: Event): void {
-    this.systemFile.set(this.extractFile(event));
+  protected readonly canRun = computed(() => !!this.systemFile() && !!this.providerFile() && !this.loading());
+
+  onSystemFileSelected(event: FileSelectEvent): void {
+    this.systemFile.set(event.files[0] ?? null);
   }
 
-  onProviderFileSelected(event: Event): void {
-    this.providerFile.set(this.extractFile(event));
+  onProviderFileSelected(event: FileSelectEvent): void {
+    this.providerFile.set(event.files[0] ?? null);
   }
 
-  onFilterChange(event: Event): void {
-    this.filter.set((event.target as HTMLSelectElement).value as ResultFilter);
+  onFilterChange(filter: ResultFilter): void {
+    this.filter.set(filter);
+  }
+
+  reset(): void {
+    this.systemFile.set(null);
+    this.providerFile.set(null);
+    this.result.set(null);
+    this.filter.set('unresolved');
+    this.errorMessage.set(null);
   }
 
   runMatch(): void {
@@ -57,7 +64,7 @@ export class PaymentsMatching {
     this.paymentMatchingService.runMatch(systemFile, providerFile).subscribe({
       next: (response) => {
         this.result.set(response);
-        this.filter.set('unresolved');
+        this.filter.set('all');
         this.loading.set(false);
       },
       error: (err: HttpErrorResponse) => {
@@ -69,17 +76,13 @@ export class PaymentsMatching {
     });
   }
 
-  resolve(item: PaymentMatchRow, resolutionSide: ResolutionSide): void {
-    this.paymentMatchingService.resolve(item.id, resolutionSide).subscribe({
+  onResolveItem(event: { item: PaymentMatchRow; side: ResolutionSide }): void {
+    this.paymentMatchingService.resolve(event.item.id, event.side).subscribe({
       next: (updated) => this.applyResolvedItem(updated),
       error: (err: HttpErrorResponse) => {
         this.errorMessage.set(err.error?.message ?? 'Could not save the resolution. Please try again.');
       },
     });
-  }
-
-  protected formatAmount(amount: number | null): string {
-    return amount === null ? '-' : amount.toFixed(2);
   }
 
   private applyResolvedItem(updated: PaymentMatchRow): void {
@@ -92,10 +95,5 @@ export class PaymentsMatching {
       ...current,
       items: current.items.map((item) => (item.id === updated.id ? updated : item)),
     });
-  }
-
-  private extractFile(event: Event): File | null {
-    const input = event.target as HTMLInputElement;
-    return input.files?.[0] ?? null;
   }
 }

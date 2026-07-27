@@ -1,9 +1,9 @@
 import { Component } from '@angular/core';
-import { PaymentsMatching } from './payments-matching/payments-matching';
+import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-root',
-  imports: [PaymentsMatching],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })

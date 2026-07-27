@@ -2,7 +2,14 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { PaymentMatchRow, ResolutionSide, ResultFilter, RunMatchResponse } from './models';
+import {
+  MatchBatchDetail,
+  MatchBatchSummary,
+  PaymentMatchRow,
+  ResolutionSide,
+  ResultFilter,
+  RunMatchResponse,
+} from './models';
 
 @Injectable({ providedIn: 'root' })
 export class PaymentMatchingService {
@@ -17,8 +24,12 @@ export class PaymentMatchingService {
     return this.http.post<RunMatchResponse>(`${this.baseUrl}/run`, formData);
   }
 
-  getItems(batchId: string, filter: ResultFilter): Observable<PaymentMatchRow[]> {
-    return this.http.get<PaymentMatchRow[]>(`${this.baseUrl}/${batchId}`, { params: { filter } });
+  listBatches(): Observable<MatchBatchSummary[]> {
+    return this.http.get<MatchBatchSummary[]>(this.baseUrl);
+  }
+
+  getBatchDetail(batchId: string, filter: ResultFilter = 'all'): Observable<MatchBatchDetail> {
+    return this.http.get<MatchBatchDetail>(`${this.baseUrl}/${batchId}`, { params: { filter } });
   }
 
   resolve(itemId: string, resolutionSide: ResolutionSide): Observable<PaymentMatchRow> {
