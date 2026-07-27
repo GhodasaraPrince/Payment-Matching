@@ -19,6 +19,7 @@ public class CsvPaymentParser : ICsvPaymentParser
 
         using var reader = new StreamReader(csvStream);
         using var csv = new CsvReader(reader, config);
+        csv.Context.RegisterClassMap<CsvPaymentRowRawMap>();
 
         List<CsvPaymentRowRaw> rawRows;
         try
@@ -62,10 +63,20 @@ public class CsvPaymentParser : ICsvPaymentParser
         return rows;
     }
 
-    private class CsvPaymentRowRaw
+    public class CsvPaymentRowRaw
     {
         public string OrderId { get; set; } = string.Empty;
         public string Amount { get; set; } = string.Empty;
         public string Currency { get; set; } = string.Empty;
+    }
+
+    private sealed class CsvPaymentRowRawMap : ClassMap<CsvPaymentRowRaw>
+    {
+        public CsvPaymentRowRawMap()
+        {
+            Map(m => m.OrderId).Name("orderId");
+            Map(m => m.Amount).Name("amount");
+            Map(m => m.Currency).Name("currency");
+        }
     }
 }
