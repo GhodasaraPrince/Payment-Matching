@@ -9,6 +9,8 @@ public class CsvPaymentParser : ICsvPaymentParser
     private static readonly HashSet<string> AllowedCurrencies =
         new(StringComparer.OrdinalIgnoreCase) { "USD", "EUR", "INR", "GBP" };
 
+    private const int MaxRows = 50_000;
+
     public List<CsvPaymentRow> Parse(Stream csvStream, string fileLabel)
     {
         var config = new CsvConfiguration(CultureInfo.InvariantCulture)
@@ -30,6 +32,12 @@ public class CsvPaymentParser : ICsvPaymentParser
         {
             throw new CsvValidationException(
                 $"{fileLabel}: could not parse CSV — {ex.Message}");
+        }
+
+        if (rawRows.Count > MaxRows)
+        {
+            throw new CsvValidationException(
+                $"{fileLabel}: file has {rawRows.Count} rows, which exceeds the {MaxRows}-row limit.");
         }
 
         var rows = new List<CsvPaymentRow>(rawRows.Count);

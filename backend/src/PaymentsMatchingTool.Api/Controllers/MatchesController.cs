@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using PaymentsMatchingTool.Api.Contracts;
 using PaymentsMatchingTool.Application.Csv;
 using PaymentsMatchingTool.Application.Matching;
@@ -19,6 +20,7 @@ public class MatchesController : ControllerBase
 
     [HttpPost("run")]
     [RequestSizeLimit(20_000_000)]
+    [EnableRateLimiting("upload")]
     public async Task<ActionResult<RunMatchResponse>> RunMatch(
         [FromForm] RunMatchRequest request,
         CancellationToken cancellationToken)
@@ -31,6 +33,16 @@ public class MatchesController : ControllerBase
         if (request.ProviderFile is null || request.ProviderFile.Length == 0)
         {
             return BadRequest(new { message = "Provider CSV file is required." });
+        }
+
+        if (!HasCsvExtension(request.SystemFile.FileName))
+        {
+            return BadRequest(new { message = "System CSV file must have a .csv extension." });
+        }
+
+        if (!HasCsvExtension(request.ProviderFile.FileName))
+        {
+            return BadRequest(new { message = "Provider CSV file must have a .csv extension." });
         }
 
         try
@@ -54,16 +66,28 @@ public class MatchesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<MatchBatchSummaryDto>>> GetAllBatches(CancellationToken cancellationToken)
+    public async Task<ActionResult<PagedResponse<MatchBatchSummaryDto>>> GetAllBatches(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        CancellationToken cancellationToken = default)
     {
-        var batches = await _matchRunService.GetAllBatchesAsync(cancellationToken);
-        return Ok(batches.Select(MatchBatchSummaryDto.From).ToList());
+        page = Math.Max(page, 1);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+
+        var (batches, totalCount) = await _matchRunService.GetAllBatchesAsync(page, pageSize, cancellationToken);
+        return Ok(new PagedResponse<MatchBatchSummaryDto>(
+            batches.Select(MatchBatchSummaryDto.From).ToList(),
+            page,
+            pageSize,
+            totalCount));
     }
 
     [HttpGet("{batchId:guid}")]
     public async Task<ActionResult<MatchBatchDetailResponse>> GetItems(
         Guid batchId,
         [FromQuery] string filter = "all",
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 100,
         CancellationToken cancellationToken = default)
     {
         if (!Enum.TryParse<MatchFilter>(filter, ignoreCase: true, out var parsedFilter))
@@ -71,14 +95,18 @@ public class MatchesController : ControllerBase
             return BadRequest(new { message = "filter must be one of: unresolved, resolved, all." });
         }
 
+        page = Math.Max(page, 1);
+        pageSize = Math.Clamp(pageSize, 1, 500);
+
         var batch = await _matchRunService.GetBatchAsync(batchId, cancellationToken);
         if (batch is null)
         {
             return NotFound();
         }
 
-        var items = await _matchRunService.GetItemsAsync(batchId, parsedFilter, cancellationToken);
-        return Ok(MatchBatchDetailResponse.From(batch, items));
+        var (items, totalCount) = await _matchRunService.GetItemsAsync(
+            batchId, parsedFilter, page, pageSize, cancellationToken);
+        return Ok(MatchBatchDetailResponse.From(batch, items, page, pageSize, totalCount));
     }
 
     [HttpPatch("items/{id:guid}/resolve")]
@@ -100,4 +128,7 @@ public class MatchesController : ControllerBase
 
         return Ok(PaymentMatchDto.From(updated));
     }
+
+    private static bool HasCsvExtension(string fileName) =>
+        fileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase);
 }

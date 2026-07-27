@@ -3,7 +3,18 @@
     <p-message severity="error" [text]="errorMessage()!" />
   }
 
-  <p-table [value]="batches()" [loading]="loading()" dataKey="id" [rowHover]="true" responsiveLayout="scroll">
+  <p-table
+    [value]="batches()"
+    [loading]="loading()"
+    dataKey="id"
+    [rowHover]="true"
+    responsiveLayout="scroll"
+    [lazy]="true"
+    [paginator]="true"
+    [rows]="pageSize"
+    [totalRecords]="totalRecords()"
+    (onLazyLoad)="onLazyLoad($event)"
+  >
     <ng-template pTemplate="header">
       <tr>
         <th>Run Date</th>

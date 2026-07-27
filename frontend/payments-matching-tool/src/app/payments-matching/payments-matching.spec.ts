@@ -74,24 +74,21 @@ describe('PaymentsMatching', () => {
     } satisfies RunMatchResponse);
   }
 
-  it('defaults to showing only unresolved items', () => {
-    setResult([
-      { id: '1', orderId: 'ORD-1', currency: 'INR', systemAmount: 100, providerAmount: 100, status: 'Matched', resolved: false, resolutionSide: null, resolvedAtUtc: null },
-      { id: '2', orderId: 'ORD-2', currency: 'INR', systemAmount: 200, providerAmount: 180, status: 'AmountMismatch', resolved: true, resolutionSide: 'System', resolvedAtUtc: '2026-01-01T00:00:00Z' },
-    ]);
+  it('defaults to the "all" filter and updates it via onFilterChange', () => {
+    expect((component as any).filter()).toBe('all');
 
-    expect((component as any).filteredItems().map((i: PaymentMatchRow) => i.id)).toEqual(['1']);
+    component.onFilterChange('resolved');
+
+    expect((component as any).filter()).toBe('resolved');
   });
 
-  it('shows only resolved items when the filter is set to resolved', () => {
+  it('items() reflects the full unfiltered result set', () => {
     setResult([
       { id: '1', orderId: 'ORD-1', currency: 'INR', systemAmount: 100, providerAmount: 100, status: 'Matched', resolved: false, resolutionSide: null, resolvedAtUtc: null },
       { id: '2', orderId: 'ORD-2', currency: 'INR', systemAmount: 200, providerAmount: 180, status: 'AmountMismatch', resolved: true, resolutionSide: 'System', resolvedAtUtc: '2026-01-01T00:00:00Z' },
     ]);
 
-    (component as any).filter.set('resolved');
-
-    expect((component as any).filteredItems().map((i: PaymentMatchRow) => i.id)).toEqual(['2']);
+    expect((component as any).items().map((i: PaymentMatchRow) => i.id)).toEqual(['1', '2']);
   });
 
   it('resolving an item calls PATCH and updates that row in place', () => {
@@ -100,7 +97,7 @@ describe('PaymentsMatching', () => {
     ]);
 
     const item = (component as any).items()[0] as PaymentMatchRow;
-    component.resolve(item, 'Provider');
+    component.onResolveItem({ item, side: 'Provider' });
 
     const req = httpMock.expectOne(`${environment.apiBaseUrl}/matches/items/1/resolve`);
     expect(req.request.method).toBe('PATCH');
@@ -110,5 +107,19 @@ describe('PaymentsMatching', () => {
     req.flush(updated);
 
     expect((component as any).items()[0]).toEqual(updated);
+    expect((component as any).resolvingIds().has('1')).toBe(false);
+  });
+
+  it('ignores a second resolve call for the same item while one is in flight', () => {
+    setResult([
+      { id: '1', orderId: 'ORD-1', currency: 'INR', systemAmount: 100, providerAmount: 100, status: 'Matched', resolved: false, resolutionSide: null, resolvedAtUtc: null },
+    ]);
+
+    const item = (component as any).items()[0] as PaymentMatchRow;
+    component.onResolveItem({ item, side: 'Provider' });
+    component.onResolveItem({ item, side: 'Provider' });
+
+    const req = httpMock.expectOne(`${environment.apiBaseUrl}/matches/items/1/resolve`);
+    expect(req.request.method).toBe('PATCH');
   });
 });

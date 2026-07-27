@@ -34,7 +34,15 @@
       />
     </div>
 
-    <p-table [value]="filteredItems()" dataKey="id" [rowHover]="true" responsiveLayout="scroll">
+    <p-table
+      [value]="filteredItems()"
+      dataKey="id"
+      [rowHover]="true"
+      responsiveLayout="scroll"
+      [paginator]="true"
+      [rows]="25"
+      [rowsPerPageOptions]="[25, 50, 100]"
+    >
       <ng-template pTemplate="header">
         <tr>
           <th>Order ID</th>
@@ -69,6 +77,8 @@
                 size="small"
                 severity="success"
                 [outlined]="true"
+                [disabled]="isResolving(item.id)"
+                [loading]="isResolving(item.id)"
                 (onClick)="resolve(item, 'System')"
               />
               <p-button
@@ -76,6 +86,8 @@
                 size="small"
                 severity="info"
                 [outlined]="true"
+                [disabled]="isResolving(item.id)"
+                [loading]="isResolving(item.id)"
                 (onClick)="resolve(item, 'Provider')"
               />
             } @else {

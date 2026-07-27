@@ -25,6 +25,7 @@ export class MatchResultsPanel {
   readonly summary = input<MatchSummary | null>(null);
   readonly items = input<PaymentMatchRow[]>([]);
   readonly filter = input<ResultFilter>('all');
+  readonly resolvingIds = input<ReadonlySet<string>>(new Set());
 
   readonly filterChange = output<ResultFilter>();
   readonly resolveItem = output<{ item: PaymentMatchRow; side: ResolutionSide }>();
@@ -50,6 +51,10 @@ export class MatchResultsPanel {
 
   resolve(item: PaymentMatchRow, side: ResolutionSide): void {
     this.resolveItem.emit({ item, side });
+  }
+
+  protected isResolving(itemId: string): boolean {
+    return this.resolvingIds().has(itemId);
   }
 
   protected formatAmount(amount: number | null): string {

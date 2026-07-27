@@ -11,7 +11,9 @@
           chooseIcon="pi pi-file"
           [auto]="false"
           [multiple]="false"
+          [maxFileSize]="9000000"
           (onSelect)="onSystemFileSelected($event)"
+          (onError)="onFileUploadError()"
         />
         @if (systemFile()) {
           <span class="file-name"><i class="pi pi-check-circle"></i> {{ systemFile()!.name }}</span>
@@ -28,7 +30,9 @@
           chooseIcon="pi pi-file"
           [auto]="false"
           [multiple]="false"
+          [maxFileSize]="9000000"
           (onSelect)="onProviderFileSelected($event)"
+          (onError)="onFileUploadError()"
         />
         @if (providerFile()) {
           <span class="file-name"><i class="pi pi-check-circle"></i> {{ providerFile()!.name }}</span>
@@ -65,6 +69,7 @@
     [summary]="s"
     [items]="items()"
     [filter]="filter()"
+    [resolvingIds]="resolvingIds()"
     (filterChange)="onFilterChange($event)"
     (resolveItem)="onResolveItem($event)"
   />

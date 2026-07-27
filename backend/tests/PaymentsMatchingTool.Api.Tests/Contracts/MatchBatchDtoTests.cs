@@ -55,13 +55,16 @@ public class MatchBatchDtoTests
             },
         };
 
-        var dto = MatchBatchDetailResponse.From(batch, items);
+        var dto = MatchBatchDetailResponse.From(batch, items, page: 1, pageSize: 100, totalItems: items.Count);
 
         Assert.Equal(batch.Id, dto.BatchId);
         Assert.Equal(batch.CreatedAtUtc, dto.CreatedAtUtc);
         Assert.Equal(batch.SystemFileName, dto.SystemFileName);
         Assert.Equal(batch.ProviderFileName, dto.ProviderFileName);
         Assert.Equal(batch.TotalCount, dto.Summary.Total);
+        Assert.Equal(1, dto.Page);
+        Assert.Equal(100, dto.PageSize);
+        Assert.Equal(items.Count, dto.TotalItems);
 
         var item = Assert.Single(dto.Items);
         Assert.Equal("ORD-1", item.OrderId);

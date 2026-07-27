@@ -36,6 +36,14 @@ export interface MatchBatchSummary {
   summary: MatchSummary;
 }
 
+export interface PagedResult<T> {
+  items: T[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+}
+
 export interface MatchBatchDetail {
   batchId: string;
   createdAtUtc: string;
@@ -43,4 +51,8 @@ export interface MatchBatchDetail {
   providerFileName: string;
   summary: MatchSummary;
   items: PaymentMatchRow[];
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
 }
