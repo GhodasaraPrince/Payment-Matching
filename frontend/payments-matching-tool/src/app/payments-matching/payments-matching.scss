@@ -39,4 +39,27 @@ button {
 
 .results-section {
   margin-top: 1.5rem;
+  overflow-x: auto;
+}
+
+.summary-line {
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid #ddd;
+    white-space: nowrap;
+  }
+
+  th {
+    font-weight: 600;
+  }
 }

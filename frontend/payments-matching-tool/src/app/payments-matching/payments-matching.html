@@ -19,8 +19,44 @@
   }
 </section>
 
-@if (result(); as r) {
+@if (summary(); as s) {
   <section class="results-section">
-    <p>Batch {{ r.batchId }} matched — {{ r.items.length }} item(s).</p>
+    <p class="summary-line">
+      Total: {{ s.total }} | Matched: {{ s.matched }} | Only System: {{ s.onlySystem }} | Only Provider:
+      {{ s.onlyProvider }} | Amount Mismatch: {{ s.amountMismatch }}
+    </p>
+
+    <table class="results-table">
+      <thead>
+        <tr>
+          <th>Order ID</th>
+          <th>System Amount</th>
+          <th>Provider Amount</th>
+          <th>Currency</th>
+          <th>Status</th>
+          <th>Resolved</th>
+          <th>Resolution Side</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of items(); track item.id) {
+          <tr>
+            <td>{{ item.orderId }}</td>
+            <td>{{ formatAmount(item.systemAmount) }}</td>
+            <td>{{ formatAmount(item.providerAmount) }}</td>
+            <td>{{ item.currency }}</td>
+            <td>{{ item.status }}</td>
+            <td>{{ item.resolved ? 'Yes' : 'No' }}</td>
+            <td>{{ item.resolutionSide ?? '-' }}</td>
+            <td></td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="8">No items to show.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
   </section>
 }
