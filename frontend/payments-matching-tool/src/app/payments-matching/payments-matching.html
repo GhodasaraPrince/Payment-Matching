@@ -1,0 +1,26 @@
+<section class="upload-section">
+  <div class="file-inputs">
+    <label>
+      System CSV
+      <input type="file" accept=".csv" (change)="onSystemFileSelected($event)" />
+    </label>
+    <label>
+      Provider CSV
+      <input type="file" accept=".csv" (change)="onProviderFileSelected($event)" />
+    </label>
+  </div>
+
+  <button type="button" (click)="runMatch()" [disabled]="loading()">
+    {{ loading() ? 'Running…' : 'Run Match' }}
+  </button>
+
+  @if (errorMessage()) {
+    <p class="error-banner">{{ errorMessage() }}</p>
+  }
+</section>
+
+@if (result(); as r) {
+  <section class="results-section">
+    <p>Batch {{ r.batchId }} matched — {{ r.items.length }} item(s).</p>
+  </section>
+}
