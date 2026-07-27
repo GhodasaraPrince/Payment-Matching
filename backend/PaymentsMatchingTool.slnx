@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/PaymentsMatchingTool.Api/PaymentsMatchingTool.Api.csproj" />
+    <Project Path="src/PaymentsMatchingTool.Application/PaymentsMatchingTool.Application.csproj" />
+    <Project Path="src/PaymentsMatchingTool.Domain/PaymentsMatchingTool.Domain.csproj" />
+    <Project Path="src/PaymentsMatchingTool.Infrastructure/PaymentsMatchingTool.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/PaymentsMatchingTool.Application.Tests/PaymentsMatchingTool.Application.Tests.csproj" />
+  </Folder>
+</Solution>
